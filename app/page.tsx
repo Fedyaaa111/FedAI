@@ -1,19 +1,18 @@
 "use client";
 
-import ReactMarkdown from "react-markdown";
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
 import { useLocalStorage } from "@/app/youtube/youtube";
 
-export default function YouTubeAI() {
+export default function Home() {
 
   const [url, setUrl] = useLocalStorage<string>("url", "");
-  const [prompt, setPrompt] = useLocalStorage<string>("prompt", "");
   const [language, setLanguage] = useLocalStorage<string>("language", "English");
+  const [prompt, setPrompt] = useLocalStorage<string>("prompt", "");
 
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
 
-  const startGeneration = async () => {
-
+  const generate = async () => {
     setLoading(true);
 
     try {
@@ -25,10 +24,15 @@ export default function YouTubeAI() {
 
       const data = await res.json();
 
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
+
       setPrompt(data.prompt);
 
-    } catch (err) {
-      alert("Error");
+    } catch {
+      alert("Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -38,47 +42,45 @@ export default function YouTubeAI() {
     <main className="min-h-screen bg-gray-900 text-white p-10 flex flex-col items-center">
 
       <h1 className="text-4xl font-bold mb-8 text-blue-400">
-        YouTube AI Prompt Generator FedAI
+        YouTube AI Generator
       </h1>
 
       <div className="w-full max-w-2xl space-y-4">
 
+        {/* URL */}
         <input
-          type="text"
-          placeholder="Add Youtube Video Url"
+          className="w-full p-4 rounded bg-gray-800 text-white"
+          placeholder="Enter YouTube URL"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          className="w-full p-4 rounded bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
         />
+
+        {/* LANGUAGE */}
         <select
+          className="w-full p-4 rounded bg-gray-800 text-white"
           value={language}
           onChange={(e) => setLanguage(e.target.value)}
-          className="w-full p-4 rounded bg-gray-800 border border-gray-700"
         >
-          <option value="English">English</option>
-          <option value="Armenian">Armenian</option>
-          <option value="Georgian">Georgian</option>
+          <option>English</option>
+          <option>Armenian</option>
+          <option>Georgian</option>
         </select>
 
+        {/* BUTTON */}
         <button
-          onClick={startGeneration}
-          disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 p-4 rounded font-bold"
+          onClick={generate}
+          className="w-full bg-blue-600 p-4 rounded font-bold"
         >
-          {loading ? "Waiting..." : "Create a prompt"}
+          {loading ? "Generating..." : "Create Prompt"}
         </button>
 
+        {/* OUTPUT */}
         {prompt && (
-          <div className="mt-10 p-6 bg-gray-800 rounded-lg border border-blue-500/30">
+          <div className="mt-10 p-6 bg-gray-800 rounded-lg">
 
-            <h2 className="text-xl font-semibold mb-4 text-blue-300">
-              Prompt:
-            </h2>
-
-            <div className="prose prose-invert max-w-none text-gray-200">
+            <div className="prose prose-invert max-w-none">
               <ReactMarkdown>{prompt}</ReactMarkdown>
             </div>
-
 
           </div>
         )}
