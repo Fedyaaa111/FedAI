@@ -1,54 +1,27 @@
-import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { useEffect, useState } from "react";
 
-export const runtime = "nodejs";
+export function useLocalStorage<T>(
+  key: string,
+  initialValue: T
+): [T, (value: T) => void] {
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+  const [value, setValue] = useState<T>(initialValue);
+  const [ready, setReady] = useState(false);
 
-export async function POST(req: NextRequest): Promise<Response> {
-  try {
-    const { url, language } = await req.json();
+  useEffect(() => {
+    const stored = localStorage.getItem(key);
 
-    if (!url) {
-      return NextResponse.json(
-        { error: "URL is required" },
-        { status: 400 }
-      );
+    if (stored) {
+      setValue(JSON.parse(stored));
     }
 
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
-    });
+    setReady(true);
+  }, [key]);
 
-    const prompt = `
-You are an AI assistant.
+  useEffect(() => {
+    if (!ready) return;
+    localStorage.setItem(key, JSON.stringify(value));
+  }, [value, ready, key]);
 
-Task:
-- Analyze this YouTube URL: ${url}
-- Create a structured step-by-step explanation
-- Output language: ${language}
-
-FORMAT:
-Step 1: explanation paragraph
-
-Step 2: explanation paragraph
-
-Step 3: explanation paragraph
-
-Final summary:
-short conclusion
-`;
-
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-
-    return NextResponse.json({ prompt: text });
-
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error.message || "Failed" },
-      { status: 500 }
-    );
-  }
+  return [value, setValue];
 }
